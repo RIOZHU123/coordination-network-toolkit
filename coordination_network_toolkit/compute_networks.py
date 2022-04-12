@@ -43,7 +43,9 @@ from zlib import adler32
 from coordination_network_toolkit.similarity import (
     similarity,
     tokenize,
+    chinese_tokenizers,
     message_preprocessor,
+    chinese_preprocessor
 )
 
 
@@ -161,7 +163,7 @@ def compute_co_tweet_network(
     db_path,
     time_window,
     min_edge_weight=1,
-    preprocessor: Callable = message_preprocessor,
+    preprocessor: Callable = chinese_preprocessor,
     reprocess_text=False,
     n_threads=4,
 ):
@@ -180,7 +182,7 @@ def compute_co_tweet_network(
 
     """
     db = lite.connect(db_path)
-    db.create_function("preprocessor", 1, message_preprocessor)
+    db.create_function("preprocessor", 1, chinese_preprocessor)
     db.create_function("message_hash", 1, lambda x: adler32(x.encode("utf8")))
 
     with db:
@@ -568,7 +570,7 @@ def compute_co_similar_tweet(
     """
     db = lite.connect(db_path, isolation_level=None)
     db.create_function("similarity", 2, similarity_function)
-    db.create_function("tokenize", 1, tokenize)
+    db.create_function("tokenize", 1, chinese_tokenizers)
 
     db.executescript(
         """

@@ -65,6 +65,9 @@ def load_networkx_graph(db_path, command, loops=False, n_messages=10):
 
     g = nx.DiGraph()
 
+    # CHECK
+    counter = 0
+
     edges = get_edge_rows(db_path, command, loops=loops)
 
     # Add the edges

@@ -9,6 +9,80 @@ from twarc.client2 import Twarc2
 
 from coordination_network_toolkit.database import initialise_db
 
+# more packages required
+import pandas as pd 
+import numpy as np
+from datetime import datetime, timedelta
+
+
+def preprocess_weibo_data(csv_path: str, save_path: str, set_col=None, cor_col=None):
+    if set_col is None:
+        set_col = ['message_id', 'user_id', 'username', 'repost_id', 'reply_id', 'message', 'timestamp', 'urls']
+    if cor_col is None:
+        cor_col = ['id', 'user_id', '用户昵称', 'retweet_id', '评论数', '微博正文', '发布时间', ['头条文章url', '微博图片url', '微博视频url']]
+
+    df = pd.read_csv(csv_path)
+
+    def convert_csv_to_csv(df, set_col = set_col, cor_col = cor_col):
+        df = df.replace({np.nan: None})
+        def convert_string_to_list(strings):
+            if strings is None:
+                return None
+            else:    
+                return strings.strip('][').split(', ')
+    
+        for cols in cor_col[-1]:
+            df[cols] = df[cols].apply(convert_string_to_list)
+    
+    
+    
+        df['url'] = df[cor_col[-1]].values.tolist()
+    
+        def clean_urlst(l):
+            return ",".join(l)
+        def flatten(t):
+            flat_list = []
+            if t is not None:
+                if isinstance(t, list): 
+                    for sublist in t:
+                        if sublist is not None:
+                            if isinstance(sublist, list): 
+                                for item in sublist:
+                                    flat_list.append(item)
+                            else:
+                                flat_list.append(sublist)
+                        
+                else:
+                    flat_list.append(t)
+        
+            return flat_list
+    
+        df['url'] = df['url'].apply(flatten)
+        df['url'] = df['url'].apply(clean_urlst)
+    
+    
+        cor_col = cor_col[:-1]
+        cor_col.append('url')
+        df_sub = df[cor_col].copy()
+        df_sub.columns = set_col
+    
+        def compute_time(dt):
+            dt =  datetime.strptime(dt, "%Y-%m-%d %H:%M")
+            return (dt - datetime(1970, 1, 1)) // timedelta(milliseconds=1)
+    
+        df_sub['timestamp'] = df_sub['timestamp'].apply(compute_time)
+    
+        return df_sub
+
+    df_sub = convert_csv_to_csv(df)
+
+    df_sub.to_csv(save_path, index = False, header = df_sub.columns)
+
+
+
+
+
+
 
 def preprocess_csv_files(db_path: str, input_filenames: List[str]):
     """

@@ -1,5 +1,97 @@
 import regex
 from typing import Callable, Pattern
+import re
+import jieba
+
+
+###### CHINESE-LANGUAGE TEXT PROCESSOR ######
+## Chinese-language tokenizer
+
+def chinese_tokenizers(context) -> str:
+    # or thulac package
+    tokenized = " ".join(list(jieba.cut(context, cut_all = True)))
+    return tokenized
+
+
+def chinese_social_media_cleaner(context: str):
+        # ref: https://chenyuzuoo.github.io/posts/28001/
+    
+    # remove links
+    context = re.sub("http://[a-zA-z./\d]*","",context)
+    
+    # remove emoji
+    # ref: https://stackoverflow.com/a/58356570
+    emoj = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+#         u"\U00002500-\U00002BEF"  # chinese char
+#         u"\U00002702-\U000027B0"
+#         u"\U00002702-\U000027B0"
+#         u"\U000024C2-\U0001F251"
+#         u"\U0001f926-\U0001f937"
+#         u"\U00010000-\U0010ffff"
+        u"\u2640-\u2642" 
+        u"\u2600-\u2B55"
+        u"\u200d"
+        u"\u23cf"
+        u"\u23e9"
+        u"\u231a"
+        u"\ufe0f"  # dingbats
+        u"\u3030"
+                      "]+", re.UNICODE)
+    context = re.sub(emoj,"",context)
+    
+    # remove hashtags
+    # tags = re.findall("#(.{0,30})#",context)
+    # context = re.sub("#.{0,30}#"," ",context)
+    
+    # extract and remove @someone (need to be fixed)
+    # e.g., 1) @XX it is a good day @xx
+    # e.g., 2) @XX @XXX it is a good day
+    at = re.findall(r"(回复)?(//)?\s*@\S*?\s*(:| |$|：)", context)
+    context = re.sub(r"(回复)?(//)?\s*@\S*?\s*(:| |$|：)"," ", context)
+    at += re.findall('@[^\s]+', context)
+    context = re.sub('@[^\s]+',"", context)
+    
+    # remove English characters
+    english = re.findall("[a-z]+",context)
+    context = re.sub("[a-z]+","",context)
+    
+    # remove puntuation
+    context = re.sub("[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+", " ",context)
+    context = re.sub("[【】╮╯▽╰╭★→「」]+"," ",context)
+    context = re.sub("[！，❤。～《》：（）【】「」？”“；：、·]+"," ",context)
+    
+    
+#     # remove space
+#     context = re.sub("\s","",context)
+    
+    # remove digits
+#     context = re.sub("\d","",context)
+    
+    # remove ...
+    context = re.sub("\.*","",context)
+    
+    return context
+
+def chinese_preprocessor(text: str):
+    return chinese_tokenizers(chinese_social_media_cleaner(text))
+
+    
+
+
+
+
+
+#############################################
+
+
+
+
+
+
 
 
 word_tokenizer = regex.compile(
