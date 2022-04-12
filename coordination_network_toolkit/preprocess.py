@@ -76,7 +76,7 @@ def preprocess_weibo_data(csv_path: str, save_path: str, set_col=None, cor_col=N
 
     df_sub = convert_csv_to_csv(df)
 
-    df_sub.drop_duplicates(subset=['message_id'], keep=first)
+    df_sub.drop_duplicates(subset=['message_id'], inplace= True)
 
     df_sub.to_csv(save_path, index = False, header = df_sub.columns)
 
