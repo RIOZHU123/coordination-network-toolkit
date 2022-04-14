@@ -13,10 +13,11 @@ def chinese_tokenizers(context) -> str:
     return tokenized
 
 
-def chinese_social_media_cleaner(context: str):
+def chinese_weibo_cleaner(context: str):
         # ref: https://chenyuzuoo.github.io/posts/28001/
     
     # remove links
+
     context = re.sub("http://[a-zA-z./\d]*","",context)
     
     # remove emoji
@@ -51,13 +52,28 @@ def chinese_social_media_cleaner(context: str):
     # e.g., 1) @XX it is a good day @xx
     # e.g., 2) @XX @XXX it is a good day
     at = re.findall(r"(回复)?(//)?\s*@\S*?\s*(:| |$|：)", context)
-    context = re.sub(r"(回复)?(//)?\s*@\S*?\s*(:| |$|：)"," ", context)
+    
     at += re.findall('@[^\s]+', context)
+    
+    slash_num = re.findall(r"(//)?", context)
+    if slash_num is not None:
+        context = context.split("//")[0]
+    context = re.sub(r"(回复)?(//)?\s*@\S*?\s*(:| |$|：)","", context)
     context = re.sub('@[^\s]+',"", context)
     
+    rep = {"转发微博": "", "轉發微博": "", "repost": ''} # define desired replacements here
+
+    # use these three lines to do the replacement
+    rep = dict((re.escape(k), v) for k, v in rep.items()) 
+    #Python 3 renamed dict.iteritems to dict.items so use rep.items() for latest versions
+    pattern = re.compile("|".join(rep.keys()))
+    context = pattern.sub(lambda m: rep[re.escape(m.group(0))], context)
+    
+    
+    
     # remove English characters
-    english = re.findall("[a-z]+",context)
-    context = re.sub("[a-z]+","",context)
+#     english = re.findall("[a-z]+",context)
+#     context = re.sub("[a-z]+","",context)
     
     # remove puntuation
     context = re.sub("[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+", " ",context)
@@ -65,8 +81,8 @@ def chinese_social_media_cleaner(context: str):
     context = re.sub("[！，❤。～《》：（）【】「」？”“；：、·]+"," ",context)
     
     
-#     # remove space
-#     context = re.sub("\s","",context)
+    # remove space
+    context = re.sub("\s","",context)
     
     # remove digits
 #     context = re.sub("\d","",context)
@@ -76,8 +92,9 @@ def chinese_social_media_cleaner(context: str):
     
     return context
 
+
 def chinese_preprocessor(text: str):
-    return chinese_tokenizers(chinese_social_media_cleaner(text))
+    return chinese_tokenizers(chinese_weibo_cleaner(str(text)))
 
     
 
@@ -140,7 +157,11 @@ def tokenize(text: str, tokenizer: Pattern = word_tokenizer) -> str:
 def similarity(tokens_1, tokens_2):
     set_1 = set(tokens_1.split())
     set_2 = set(tokens_2.split())
-    return len(set_1 & set_2) / len(set_1 | set_2)
+
+    if len(set_1) == 0 or len(set_2) == 0:
+        return 0
+    else:
+        return len(set_1 & set_2) / len(set_1 | set_2)
 
 
 class MinDocSizeSimilarity:

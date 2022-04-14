@@ -163,9 +163,10 @@ def compute_co_tweet_network(
     db_path,
     time_window,
     min_edge_weight=1,
-    preprocessor: Callable = chinese_preprocessor,
+    preprocessor: Callable = message_preprocessor,
     reprocess_text=False,
     n_threads=4,
+    language='en'
 ):
     """
     Compute a co-tweet network on the given database.
@@ -182,7 +183,11 @@ def compute_co_tweet_network(
 
     """
     db = lite.connect(db_path)
-    db.create_function("preprocessor", 1, chinese_preprocessor)
+    if language == 'en':
+        db.create_function("preprocessor", 1, preprocessor)
+    elif language == 'cn':
+        db.create_function("preprocessor", 1, chinese_preprocessor)
+
     db.create_function("message_hash", 1, lambda x: adler32(x.encode("utf8")))
 
     with db:
