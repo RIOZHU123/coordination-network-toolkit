@@ -1,4 +1,4 @@
-# Coordination Network Toolkit
+# Coordination Network Toolkit (CHINESE-Lauguage Verision)
 
 A small command line tool and set of functions for studying coordination networks
 in Twitter and other social media data.
